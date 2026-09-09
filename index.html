@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Belno Plush Cliker</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Belno Plush Clicker</title>
     <link rel="icon" href="images/icon.png" type="image/png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -11,10 +11,9 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
     <style>
-        .material-symbols-outlined {
-            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
-            font-size: 22px;
-            vertical-align: middle;
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
         }
 
         body, html {
@@ -25,7 +24,15 @@
             overflow: hidden;
             background-color: #222;
             user-select: none;
+            -webkit-user-select: none;
+            touch-action: none;
             font-family: 'Fredoka', cursive, sans-serif;
+        }
+
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            font-size: 22px;
+            vertical-align: middle;
         }
 
         .bg-blur {
@@ -47,15 +54,18 @@
             display: block;
             position: relative;
             z-index: 1;
+            touch-action: none;
         }
 
         .button-container {
             position: fixed;
-            top: 20px;
-            left: 20px;
+            top: max(16px, env(safe-area-inset-top));
+            left: max(16px, env(safe-area-inset-left));
+            right: max(16px, env(safe-area-inset-right));
             display: flex;
             align-items: center;
-            gap: 12px;
+            flex-wrap: wrap;
+            gap: 10px;
             z-index: 9999;
         }
 
@@ -63,9 +73,9 @@
             background-color: #ff4757;
             color: white;
             border: none;
-            padding: 12px 22px;
+            padding: 10px 18px;
             font-family: 'Fredoka', cursive, sans-serif;
-            font-size: 17px;
+            font-size: 15px;
             font-weight: 700;
             letter-spacing: 0.5px;
             border-radius: 12px;
@@ -75,6 +85,7 @@
             display: inline-flex;
             align-items: center;
             justify-content: center;
+            touch-action: manipulation;
         }
 
         .control-btn:active {
@@ -87,7 +98,7 @@
         }
 
         .icon-btn {
-            padding: 12px 14px;
+            padding: 10px 12px;
             background-color: #57606f;
         }
 
@@ -113,11 +124,11 @@
 
         .watermark {
             position: fixed;
-            bottom: 20px;
-            left: 20px;
+            bottom: max(16px, env(safe-area-inset-bottom));
+            left: max(16px, env(safe-area-inset-left));
             color: rgba(255, 255, 255, 0.45);
             font-family: 'Fredoka', cursive, sans-serif;
-            font-size: 26px;
+            font-size: 22px;
             font-weight: 700;
             letter-spacing: 1.5px;
             text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
@@ -125,14 +136,44 @@
             z-index: 9999;
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 8px;
         }
 
         .watermark img {
-            width: 30px;
-            height: 30px;
+            width: 26px;
+            height: 26px;
             opacity: 0.6;
             object-fit: contain;
+        }
+
+        /* Mobile Adjustments */
+        @media (max-width: 600px) {
+            .button-container {
+                gap: 6px;
+            }
+
+            .control-btn {
+                padding: 8px 12px;
+                font-size: 13px;
+                border-radius: 8px;
+            }
+
+            .icon-btn {
+                padding: 8px 10px;
+            }
+
+            .material-symbols-outlined {
+                font-size: 18px;
+            }
+
+            .watermark {
+                font-size: 16px;
+            }
+
+            .watermark img {
+                width: 20px;
+                height: 20px;
+            }
         }
     </style>
 </head>
@@ -175,14 +216,24 @@
         const runner = Runner.create();
         Runner.run(runner, engine);
 
-        const wallOptions = { isStatic: true, render: { visible: false } };
-        
-        let floor = Bodies.rectangle(window.innerWidth / 2, window.innerHeight + 30, window.innerWidth, 100, wallOptions);
-        let leftWall = Bodies.rectangle(-30, window.innerHeight / 2, 100, window.innerHeight * 2, wallOptions);
-        let rightWall = Bodies.rectangle(window.innerWidth + 30, window.innerHeight / 2, 100, window.innerHeight * 2, wallOptions);
-        let ceiling = Bodies.rectangle(window.innerWidth / 2, -30, window.innerWidth, 100, wallOptions);
+        let walls = [];
+        function createWalls() {
+            if (walls.length > 0) {
+                Composite.remove(engine.world, walls);
+            }
+            const w = window.innerWidth;
+            const h = window.innerHeight;
+            const wallOptions = { isStatic: true, render: { visible: false } };
 
-        Composite.add(engine.world, [floor, leftWall, rightWall, ceiling]);
+            const floor = Bodies.rectangle(w / 2, h + 30, w * 2, 100, wallOptions);
+            const leftWall = Bodies.rectangle(-30, h / 2, 100, h * 2, wallOptions);
+            const rightWall = Bodies.rectangle(w + 30, h / 2, 100, h * 2, wallOptions);
+            const ceiling = Bodies.rectangle(w / 2, -30, w * 2, 100, wallOptions);
+
+            walls = [floor, leftWall, rightWall, ceiling];
+            Composite.add(engine.world, walls);
+        }
+        createWalls();
 
         const mouse = Mouse.create(render.canvas);
         const mouseConstraint = MouseConstraint.create(engine, {
@@ -220,11 +271,14 @@
                     sound.currentTime = 0;
                 }).catch(() => {});
             });
-            window.removeEventListener('click', unlockAudio);
-            window.removeEventListener('keydown', unlockAudio);
+            ['click', 'touchstart', 'pointerdown', 'keydown'].forEach(evt => {
+                window.removeEventListener(evt, unlockAudio);
+            });
         }
-        window.addEventListener('click', unlockAudio);
-        window.addEventListener('keydown', unlockAudio);
+
+        ['click', 'touchstart', 'pointerdown', 'keydown'].forEach(evt => {
+            window.addEventListener(evt, unlockAudio);
+        });
 
         function playSFX() {
             const sound = sfxPool[sfxIndex];
@@ -238,20 +292,26 @@
             setTimeout(() => { isDragging = false; }, 100);
         });
 
-        function spawnPlush(x, y, playSound = true) {
-            const plushWidth = 80;
-            const plushHeight = 80;
+        function getResponsivePlushSize() {
+            const minDim = Math.min(window.innerWidth, window.innerHeight);
+            if (minDim < 480) return 60;
+            if (minDim < 768) return 70;
+            return 80;
+        }
 
-            const plush = Bodies.rectangle(x, y, plushWidth, plushHeight, {
-                chamfer: { radius: 14 },
+        function spawnPlush(x, y, playSound = true) {
+            const plushSize = getResponsivePlushSize();
+
+            const plush = Bodies.rectangle(x, y, plushSize, plushSize, {
+                chamfer: { radius: plushSize * 0.175 },
                 restitution: 0.5,
                 friction: 0.2,
                 frictionStatic: 0.1,
                 render: {
                     sprite: {
                         texture: 'images/plush.png',
-                        xScale: plushWidth / 100,
-                        yScale: plushHeight / 100
+                        xScale: plushSize / 100,
+                        yScale: plushSize / 100
                     }
                 }
             });
@@ -327,9 +387,10 @@
             }
         });
 
-        window.addEventListener('click', (event) => {
+        window.addEventListener('pointerdown', (event) => {
             if (event.target.closest('.button-container')) return;
             if (isDragging) return;
+            if (event.button && event.button !== 0) return;
 
             const clickedBodies = Query.point(plushBodies, { x: event.clientX, y: event.clientY });
 
@@ -349,9 +410,9 @@
                 autoBtn.classList.remove('active');
             } else {
                 autoDropInterval = setInterval(() => {
-                    const randomX = Math.random() * (window.innerWidth - 160) + 80;
-                    spawnPlush(randomX, 80, false);
-                }, 100);
+                    const randomX = Math.random() * (window.innerWidth - 120) + 60;
+                    spawnPlush(randomX, 60, false);
+                }, 120);
 
                 autoBtn.textContent = "Auto Drop: ON";
                 autoBtn.classList.add('active');
@@ -431,9 +492,7 @@
             render.canvas.width = window.innerWidth;
             render.canvas.height = window.innerHeight;
 
-            Body.setPosition(floor, { x: window.innerWidth / 2, y: window.innerHeight + 30 });
-            Body.setPosition(rightWall, { x: window.innerWidth + 30, y: window.innerHeight / 2 });
-            Body.setPosition(ceiling, { x: window.innerWidth / 2, y: -30 });
+            createWalls();
         });
     </script>
 </body>
