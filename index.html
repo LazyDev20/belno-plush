@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Belno Plush Cliker</title>
+    <link rel="icon" href="images/icon.png" type="image/png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
+    <style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            font-size: 22px;
+            vertical-align: middle;
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: #222;
+            user-select: none;
+            font-family: 'Fredoka', cursive, sans-serif;
+        }
+
+        .bg-blur {
+            position: fixed;
+            top: -20px;
+            left: -20px;
+            width: calc(100% + 40px);
+            height: calc(100% + 40px);
+            background-image: url('bg.png');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            filter: blur(5px);
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        canvas {
+            display: block;
+            position: relative;
+            z-index: 1;
+        }
+
+        .button-container {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            z-index: 9999;
+        }
+
+        .control-btn {
+            background-color: #ff4757;
+            color: white;
+            border: none;
+            padding: 12px 22px;
+            font-family: 'Fredoka', cursive, sans-serif;
+            font-size: 17px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            border-radius: 12px;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+            transition: transform 0.1s, background 0.2s, box-shadow 0.2s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .control-btn:active {
+            transform: scale(0.95);
+        }
+
+        .control-btn:hover {
+            background-color: #ff6b81;
+            box-shadow: 0 6px 14px rgba(0, 0, 0, 0.5);
+        }
+
+        .icon-btn {
+            padding: 12px 14px;
+            background-color: #57606f;
+        }
+
+        .icon-btn:hover {
+            background-color: #747d8c;
+        }
+
+        .explode-btn {
+            background-color: #ffa502;
+        }
+
+        .explode-btn:hover {
+            background-color: #eccc68;
+        }
+
+        .control-btn.active {
+            background-color: #2ed573;
+        }
+
+        .control-btn.active:hover {
+            background-color: #7bed9f;
+        }
+
+        .watermark {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            color: rgba(255, 255, 255, 0.45);
+            font-family: 'Fredoka', cursive, sans-serif;
+            font-size: 26px;
+            font-weight: 700;
+            letter-spacing: 1.5px;
+            text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+            pointer-events: none;
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .watermark img {
+            width: 30px;
+            height: 30px;
+            opacity: 0.6;
+            object-fit: contain;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="bg-blur"></div>
+
+    <div class="button-container">
+        <button id="auto-btn" class="control-btn">Auto Drop: OFF</button>
+        <button id="remove-btn" class="control-btn">Remove All</button>
+        <button id="explode-btn" class="control-btn explode-btn">Explode!</button>
+        <button id="drag-btn" class="control-btn icon-btn" title="Toggle Dragging">
+            <span class="material-symbols-outlined">drag_pan</span>
+        </button>
+    </div>
+
+    <div class="watermark">
+        <img src="images/icon.png" alt="icon">
+        <span>blinkle.fun</span>
+    </div>
+
+    <script>
+        const { Engine, Render, Runner, Bodies, Composite, Mouse, MouseConstraint, Query, Events, Body } = Matter;
+
+        const engine = Engine.create();
+
+        const render = Render.create({
+            element: document.body,
+            engine: engine,
+            options: {
+                width: window.innerWidth,
+                height: window.innerHeight,
+                wireframes: false,
+                background: 'transparent'
+            }
+        });
+
+        Render.run(render);
+
+        const runner = Runner.create();
+        Runner.run(runner, engine);
+
+        const wallOptions = { isStatic: true, render: { visible: false } };
+        
+        let floor = Bodies.rectangle(window.innerWidth / 2, window.innerHeight + 30, window.innerWidth, 100, wallOptions);
+        let leftWall = Bodies.rectangle(-30, window.innerHeight / 2, 100, window.innerHeight * 2, wallOptions);
+        let rightWall = Bodies.rectangle(window.innerWidth + 30, window.innerHeight / 2, 100, window.innerHeight * 2, wallOptions);
+        let ceiling = Bodies.rectangle(window.innerWidth / 2, -30, window.innerWidth, 100, wallOptions);
+
+        Composite.add(engine.world, [floor, leftWall, rightWall, ceiling]);
+
+        const mouse = Mouse.create(render.canvas);
+        const mouseConstraint = MouseConstraint.create(engine, {
+            mouse: mouse,
+            constraint: {
+                stiffness: 0.2,
+                render: { visible: false }
+            }
+        });
+
+        mouseConstraint.collisionFilter.mask = 0;
+        Composite.add(engine.world, mouseConstraint);
+        render.mouse = mouse;
+
+        let plushBodies = [];
+        let poppingBodies = [];
+        let particles = [];
+
+        let autoDropInterval = null;
+        let isDragging = false;
+        let dragEnabled = false;
+
+        const POOL_SIZE = 10;
+        const sfxPool = Array.from({ length: POOL_SIZE }, () => {
+            const a = new Audio('sfx/sfx.mp3');
+            a.volume = 0.8;
+            return a;
+        });
+        let sfxIndex = 0;
+
+        function unlockAudio() {
+            sfxPool.forEach(sound => {
+                sound.play().then(() => {
+                    sound.pause();
+                    sound.currentTime = 0;
+                }).catch(() => {});
+            });
+            window.removeEventListener('click', unlockAudio);
+            window.removeEventListener('keydown', unlockAudio);
+        }
+        window.addEventListener('click', unlockAudio);
+        window.addEventListener('keydown', unlockAudio);
+
+        function playSFX() {
+            const sound = sfxPool[sfxIndex];
+            sound.currentTime = 0;
+            sound.play().catch(() => {});
+            sfxIndex = (sfxIndex + 1) % POOL_SIZE;
+        }
+
+        Events.on(mouseConstraint, 'startdrag', () => { isDragging = true; });
+        Events.on(mouseConstraint, 'enddrag', () => {
+            setTimeout(() => { isDragging = false; }, 100);
+        });
+
+        function spawnPlush(x, y, playSound = true) {
+            const plushWidth = 80;
+            const plushHeight = 80;
+
+            const plush = Bodies.rectangle(x, y, plushWidth, plushHeight, {
+                chamfer: { radius: 14 },
+                restitution: 0.5,
+                friction: 0.2,
+                frictionStatic: 0.1,
+                render: {
+                    sprite: {
+                        texture: 'images/plush.png',
+                        xScale: plushWidth / 100,
+                        yScale: plushHeight / 100
+                    }
+                }
+            });
+
+            Body.setAngularVelocity(plush, (Math.random() - 0.5) * 0.2);
+            Body.setVelocity(plush, {
+                x: (Math.random() - 0.5) * 2,
+                y: 0
+            });
+
+            Composite.add(engine.world, plush);
+            plushBodies.push(plush);
+
+            if (playSound) playSFX();
+        }
+
+        function createPopParticles(x, y) {
+            const colors = ['#ff4757', '#ffa502', '#2ed573', '#1e90ff', '#ffffff'];
+            for (let i = 0; i < 8; i++) {
+                const angle = Math.random() * Math.PI * 2;
+                const speed = 2 + Math.random() * 6;
+                particles.push({
+                    x: x,
+                    y: y,
+                    vx: Math.cos(angle) * speed,
+                    vy: Math.sin(angle) * speed,
+                    radius: 3 + Math.random() * 5,
+                    color: colors[Math.floor(Math.random() * colors.length)],
+                    life: 1.0
+                });
+            }
+        }
+
+        Events.on(engine, 'beforeUpdate', () => {
+            for (let i = poppingBodies.length - 1; i >= 0; i--) {
+                const body = poppingBodies[i];
+
+                if (body.render.sprite) {
+                    body.render.sprite.xScale *= 0.86;
+                    body.render.sprite.yScale *= 0.86;
+                }
+                
+                Body.scale(body, 0.86, 0.86);
+
+                if (body.render.sprite && body.render.sprite.xScale < 0.02) {
+                    createPopParticles(body.position.x, body.position.y);
+                    Composite.remove(engine.world, body);
+                    poppingBodies.splice(i, 1);
+                }
+            }
+        });
+
+        Events.on(render, 'afterRender', () => {
+            const context = render.context;
+            for (let i = particles.length - 1; i >= 0; i--) {
+                const p = particles[i];
+                p.x += p.vx;
+                p.y += p.vy;
+                p.life -= 0.04;
+
+                if (p.life <= 0) {
+                    particles.splice(i, 1);
+                    continue;
+                }
+
+                context.save();
+                context.globalAlpha = p.life;
+                context.fillStyle = p.color;
+                context.beginPath();
+                context.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+                context.fill();
+                context.restore();
+            }
+        });
+
+        window.addEventListener('click', (event) => {
+            if (event.target.closest('.button-container')) return;
+            if (isDragging) return;
+
+            const clickedBodies = Query.point(plushBodies, { x: event.clientX, y: event.clientY });
+
+            if (clickedBodies.length === 0) {
+                spawnPlush(event.clientX, event.clientY, true);
+            }
+        });
+
+        const autoBtn = document.getElementById('auto-btn');
+        autoBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+
+            if (autoDropInterval) {
+                clearInterval(autoDropInterval);
+                autoDropInterval = null;
+                autoBtn.textContent = "Auto Drop: OFF";
+                autoBtn.classList.remove('active');
+            } else {
+                autoDropInterval = setInterval(() => {
+                    const randomX = Math.random() * (window.innerWidth - 160) + 80;
+                    spawnPlush(randomX, 80, false);
+                }, 100);
+
+                autoBtn.textContent = "Auto Drop: ON";
+                autoBtn.classList.add('active');
+            }
+        });
+
+        const removeBtn = document.getElementById('remove-btn');
+        removeBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            Composite.remove(engine.world, plushBodies);
+            Composite.remove(engine.world, poppingBodies);
+            plushBodies = [];
+            poppingBodies = [];
+            particles = [];
+        });
+
+        const explodeBtn = document.getElementById('explode-btn');
+        explodeBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+
+            if (plushBodies.length === 0) return;
+
+            if (plushBodies.length >= 120) {
+                const victims = [...plushBodies];
+                plushBodies = [];
+
+                victims.forEach((plush) => {
+                    setTimeout(() => {
+                        plush.collisionFilter.mask = 0;
+                        
+                        Body.setVelocity(plush, {
+                            x: (Math.random() - 0.5) * 60,
+                            y: -25 - Math.random() * 30
+                        });
+                        Body.setAngularVelocity(plush, (Math.random() - 0.5) * 3.5);
+
+                        poppingBodies.push(plush);
+                    }, Math.random() * 200);
+                });
+
+                for (let i = 0; i < 8; i++) {
+                    setTimeout(() => playSFX(), i * 40);
+                }
+
+            } else {
+                plushBodies.forEach(plush => {
+                    const randomAngle = Math.random() * Math.PI * 2;
+                    const forceMagnitude = (0.12 + Math.random() * 0.18) * plush.mass;
+
+                    const forceX = Math.cos(randomAngle) * forceMagnitude;
+                    const forceY = Math.sin(randomAngle) * forceMagnitude;
+
+                    Body.applyForce(plush, plush.position, { x: forceX, y: forceY });
+                });
+
+                playSFX();
+            }
+        });
+
+        const dragBtn = document.getElementById('drag-btn');
+        dragBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            dragEnabled = !dragEnabled;
+
+            mouseConstraint.collisionFilter.mask = dragEnabled ? 0xFFFFFFFF : 0;
+
+            if (dragEnabled) {
+                dragBtn.classList.add('active');
+            } else {
+                dragBtn.classList.remove('active');
+            }
+        });
+
+        window.addEventListener('resize', () => {
+            render.options.width = window.innerWidth;
+            render.options.height = window.innerHeight;
+            render.canvas.width = window.innerWidth;
+            render.canvas.height = window.innerHeight;
+
+            Body.setPosition(floor, { x: window.innerWidth / 2, y: window.innerHeight + 30 });
+            Body.setPosition(rightWall, { x: window.innerWidth + 30, y: window.innerHeight / 2 });
+            Body.setPosition(ceiling, { x: window.innerWidth / 2, y: -30 });
+        });
+    </script>
+</body>
+</html>
