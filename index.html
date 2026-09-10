@@ -109,6 +109,29 @@
             display: block;
         }
 
+        .eaten-counter {
+            background-color: #57606f;
+            color: white;
+            cursor: default;
+            gap: 6px;
+        }
+
+        .eaten-counter:hover {
+            background-color: #57606f;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+        }
+
+        .eaten-counter:active {
+            transform: none;
+        }
+
+        .eaten-counter img {
+            width: clamp(18px, 2.5vw, 22px);
+            height: clamp(18px, 2.5vw, 22px);
+            object-fit: contain;
+            display: block;
+        }
+
         .explode-btn {
             background-color: #ffa502;
         }
@@ -177,6 +200,10 @@
         <button id="custom-btn" class="control-btn icon-btn" title="Remove Oguris Only">
             <img src="images/custom_icon.png" alt="icon">
         </button>
+        <div id="eaten-counter" class="control-btn eaten-counter" title="Total Eaten">
+            <img src="images/iconfork.png" alt="icon">
+            <span id="eaten-count">0</span>
+        </div>
     </div>
 
     <div class="watermark">
@@ -185,6 +212,44 @@
     </div>
 
     <script>
+        function getCookie(name) {
+            const value = `; ${document.cookie}`;
+            const parts = value.split(`; ${name}=`);
+            if (parts.length === 2) return parts.pop().split(';').shift();
+            return null;
+        }
+
+        function setCookie(name, value, days = 365) {
+            const d = new Date();
+            d.setTime(d.getTime() + (days * 24 * 60 * 60 * 1000));
+            document.cookie = `${name}=${value};expires=${d.toUTCString()};path=/`;
+        }
+
+        function formatNumber(num) {
+            if (num >= 1e12) return (num / 1e12).toFixed(1).replace(/\.0$/, '') + 'T';
+            if (num >= 1e9) return (num / 1e9).toFixed(1).replace(/\.0$/, '') + 'B';
+            if (num >= 1e6) return (num / 1e6).toFixed(1).replace(/\.0$/, '') + 'M';
+            if (num >= 1e3) return (num / 1e3).toFixed(1).replace(/\.0$/, '') + 'K';
+            return num.toString();
+        }
+
+        let totalEaten = parseInt(getCookie('eatenCount') || '0', 10);
+        const eatenCountEl = document.getElementById('eaten-count');
+        const eatenCounterBtn = document.getElementById('eaten-counter');
+        
+        function updateCounterUI() {
+            eatenCountEl.textContent = formatNumber(totalEaten);
+            eatenCounterBtn.title = `Total Eaten: ${totalEaten.toLocaleString()}`;
+        }
+        
+        updateCounterUI();
+
+        function incrementEatenCounter() {
+            totalEaten++;
+            updateCounterUI();
+            setCookie('eatenCount', totalEaten);
+        }
+
         const { Engine, Render, Runner, Bodies, Composite, Mouse, MouseConstraint, Events, Body, Query } = Matter;
 
         const engine = Engine.create();
@@ -239,7 +304,6 @@
         let autoDropInterval = null;
         let dragEnabled = false;
 
-        // --- Audio setups targeting the 'sfx' folder ---
         const sfxSpawn = new Audio('sfx/sfx.mp3');
         sfxSpawn.preload = 'auto';
 
@@ -273,7 +337,7 @@
             return Math.max(45, Math.min(80, minDimension * 0.12));
         }
 
-        function spawnPlush(x, y, playSound = true, isManual = false) {
+        function spawnPlush(x, y, playSound = true, isManual = false, forceOguri = false) {
             const plushSize = getResponsivePlushSize();
             const plushWidth = plushSize;
             const plushHeight = plushSize;
@@ -283,7 +347,7 @@
             let isOguri = false;
             let texture = 'images/plush.png';
 
-            if (isManual && rand < 0.006) {
+            if (forceOguri || (isManual && rand < 0.006)) {
                 isEater = true;
                 isOguri = true;
                 texture = 'images/oguri.png';
@@ -340,6 +404,15 @@
             if (playSound) playSpawnSFX();
         }
 
+        window.spawnOguri = function(count = 1) {
+            for (let i = 0; i < count; i++) {
+                const rx = Math.random() * (window.innerWidth - 160) + 80;
+                const ry = 80 + Math.random() * 50;
+                spawnPlush(rx, ry, true, false, true);
+            }
+            console.log(`Spawned ${count} Oguri!`);
+        };
+
         function createPopParticles(x, y, count = 8) {
             const colors = ['#ff4757', '#ffa502', '#2ed573', '#1e90ff', '#ffffff'];
             const scaleFactor = getResponsivePlushSize() / 80;
@@ -383,9 +456,11 @@
             eater.eatCount++;
             eater.eatCooldown = Date.now() + 250;
 
+            incrementEatenCounter();
+
             createPopParticles(food.position.x, food.position.y);
             spawnFunnyText(food.position.x, food.position.y);
-            playEatSFX(); // Plays sfx/sfx2.mp3 when Oguri eats
+            playEatSFX();
 
             if (mouseConstraint.body === food) {
                 mouseConstraint.constraint.body = null;
@@ -663,7 +738,7 @@
                     Body.applyForce(plush, plush.position, { x: forceX, y: forceY });
                 });
 
-                playSpawnSFX(); // Plays sfx/sfx.mp3 on explosion
+                playSpawnSFX();
             }
         });
 
