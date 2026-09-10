@@ -112,17 +112,17 @@
         .eaten-counter {
             background-color: #57606f;
             color: white;
-            cursor: default;
+            cursor: pointer;
             gap: 6px;
         }
 
         .eaten-counter:hover {
-            background-color: #57606f;
+            background-color: #747d8c;
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
         }
 
         .eaten-counter:active {
-            transform: none;
+            transform: scale(0.95);
         }
 
         .eaten-counter img {
@@ -237,10 +237,33 @@
         const eatenCountEl = document.getElementById('eaten-count');
         const eatenCounterBtn = document.getElementById('eaten-counter');
         
+        let isHovered = false;
+        let isToggledMobile = false;
+
         function updateCounterUI() {
-            eatenCountEl.textContent = formatNumber(totalEaten);
+            if (isHovered || isToggledMobile) {
+                eatenCountEl.textContent = totalEaten.toLocaleString();
+            } else {
+                eatenCountEl.textContent = formatNumber(totalEaten);
+            }
             eatenCounterBtn.title = `Total Eaten: ${totalEaten.toLocaleString()}`;
         }
+
+        eatenCounterBtn.addEventListener('mouseenter', () => {
+            isHovered = true;
+            updateCounterUI();
+        });
+
+        eatenCounterBtn.addEventListener('mouseleave', () => {
+            isHovered = false;
+            updateCounterUI();
+        });
+
+        eatenCounterBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            isToggledMobile = !isToggledMobile;
+            updateCounterUI();
+        });
         
         updateCounterUI();
 
