@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Belno Plush Clicker</title>
     <link rel="icon" href="images/icon.png" type="image/png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -11,9 +11,10 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
     <style>
-        * {
-            box-sizing: border-box;
-            -webkit-tap-highlight-color: transparent;
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            font-size: clamp(18px, 2.5vw, 22px);
+            vertical-align: middle;
         }
 
         body, html {
@@ -24,15 +25,8 @@
             overflow: hidden;
             background-color: #222;
             user-select: none;
-            -webkit-user-select: none;
             touch-action: none;
             font-family: 'Fredoka', cursive, sans-serif;
-        }
-
-        .material-symbols-outlined {
-            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
-            font-size: 22px;
-            vertical-align: middle;
         }
 
         .bg-blur {
@@ -54,28 +48,31 @@
             display: block;
             position: relative;
             z-index: 1;
-            touch-action: none;
+            width: 100vw;
+            height: 100vh;
         }
 
         .button-container {
             position: fixed;
-            top: max(16px, env(safe-area-inset-top));
-            left: max(16px, env(safe-area-inset-left));
-            right: max(16px, env(safe-area-inset-right));
+            top: 15px;
+            left: 15px;
+            right: 15px;
             display: flex;
             align-items: center;
+            gap: 8px;
             flex-wrap: wrap;
-            gap: 10px;
             z-index: 9999;
+            pointer-events: none;
         }
 
         .control-btn {
+            pointer-events: auto;
             background-color: #ff4757;
             color: white;
             border: none;
-            padding: 10px 18px;
+            padding: clamp(8px, 1.5vw, 12px) clamp(12px, 2vw, 22px);
             font-family: 'Fredoka', cursive, sans-serif;
-            font-size: 15px;
+            font-size: clamp(13px, 1.8vw, 17px);
             font-weight: 700;
             letter-spacing: 0.5px;
             border-radius: 12px;
@@ -85,7 +82,6 @@
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            touch-action: manipulation;
         }
 
         .control-btn:active {
@@ -98,12 +94,19 @@
         }
 
         .icon-btn {
-            padding: 10px 12px;
+            padding: clamp(8px, 1.5vw, 12px) clamp(10px, 1.8vw, 14px);
             background-color: #57606f;
         }
 
         .icon-btn:hover {
             background-color: #747d8c;
+        }
+
+        .icon-btn img {
+            width: clamp(18px, 2.5vw, 22px);
+            height: clamp(18px, 2.5vw, 22px);
+            object-fit: contain;
+            display: block;
         }
 
         .explode-btn {
@@ -124,11 +127,11 @@
 
         .watermark {
             position: fixed;
-            bottom: max(16px, env(safe-area-inset-bottom));
-            left: max(16px, env(safe-area-inset-left));
+            bottom: 15px;
+            left: 15px;
             color: rgba(255, 255, 255, 0.45);
             font-family: 'Fredoka', cursive, sans-serif;
-            font-size: 22px;
+            font-size: clamp(18px, 2.5vw, 26px);
             font-weight: 700;
             letter-spacing: 1.5px;
             text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
@@ -140,39 +143,22 @@
         }
 
         .watermark img {
-            width: 26px;
-            height: 26px;
+            width: clamp(22px, 3vw, 30px);
+            height: clamp(22px, 3vw, 30px);
             opacity: 0.6;
             object-fit: contain;
         }
 
-        /* Mobile Adjustments */
-        @media (max-width: 600px) {
+        @media (max-width: 480px) {
             .button-container {
+                top: 10px;
+                left: 10px;
+                right: 10px;
                 gap: 6px;
             }
-
-            .control-btn {
-                padding: 8px 12px;
-                font-size: 13px;
-                border-radius: 8px;
-            }
-
-            .icon-btn {
-                padding: 8px 10px;
-            }
-
-            .material-symbols-outlined {
-                font-size: 18px;
-            }
-
             .watermark {
-                font-size: 16px;
-            }
-
-            .watermark img {
-                width: 20px;
-                height: 20px;
+                bottom: 10px;
+                left: 10px;
             }
         }
     </style>
@@ -188,6 +174,9 @@
         <button id="drag-btn" class="control-btn icon-btn" title="Toggle Dragging">
             <span class="material-symbols-outlined">drag_pan</span>
         </button>
+        <button id="custom-btn" class="control-btn icon-btn" title="Remove Oguris Only">
+            <img src="images/custom_icon.png" alt="icon">
+        </button>
     </div>
 
     <div class="watermark">
@@ -196,9 +185,10 @@
     </div>
 
     <script>
-        const { Engine, Render, Runner, Bodies, Composite, Mouse, MouseConstraint, Query, Events, Body } = Matter;
+        const { Engine, Render, Runner, Bodies, Composite, Mouse, MouseConstraint, Events, Body, Query } = Matter;
 
         const engine = Engine.create();
+        const pixelRatio = Math.min(window.devicePixelRatio || 1, 2);
 
         const render = Render.create({
             element: document.body,
@@ -206,6 +196,7 @@
             options: {
                 width: window.innerWidth,
                 height: window.innerHeight,
+                pixelRatio: pixelRatio,
                 wireframes: false,
                 background: 'transparent'
             }
@@ -216,26 +207,18 @@
         const runner = Runner.create();
         Runner.run(runner, engine);
 
-        let walls = [];
-        function createWalls() {
-            if (walls.length > 0) {
-                Composite.remove(engine.world, walls);
-            }
-            const w = window.innerWidth;
-            const h = window.innerHeight;
-            const wallOptions = { isStatic: true, render: { visible: false } };
+        const wallOptions = { isStatic: true, render: { visible: false } };
+        
+        let floor = Bodies.rectangle(window.innerWidth / 2, window.innerHeight + 30, window.innerWidth * 2, 100, wallOptions);
+        let leftWall = Bodies.rectangle(-30, window.innerHeight / 2, 100, window.innerHeight * 2, wallOptions);
+        let rightWall = Bodies.rectangle(window.innerWidth + 30, window.innerHeight / 2, 100, window.innerHeight * 2, wallOptions);
+        let ceiling = Bodies.rectangle(window.innerWidth / 2, -30, window.innerWidth * 2, 100, wallOptions);
 
-            const floor = Bodies.rectangle(w / 2, h + 30, w * 2, 100, wallOptions);
-            const leftWall = Bodies.rectangle(-30, h / 2, 100, h * 2, wallOptions);
-            const rightWall = Bodies.rectangle(w + 30, h / 2, 100, h * 2, wallOptions);
-            const ceiling = Bodies.rectangle(w / 2, -30, w * 2, 100, wallOptions);
-
-            walls = [floor, leftWall, rightWall, ceiling];
-            Composite.add(engine.world, walls);
-        }
-        createWalls();
+        Composite.add(engine.world, [floor, leftWall, rightWall, ceiling]);
 
         const mouse = Mouse.create(render.canvas);
+        mouse.pixelRatio = pixelRatio;
+
         const mouseConstraint = MouseConstraint.create(engine, {
             mouse: mouse,
             constraint: {
@@ -251,101 +234,215 @@
         let plushBodies = [];
         let poppingBodies = [];
         let particles = [];
+        let floatingTexts = [];
 
         let autoDropInterval = null;
-        let isDragging = false;
         let dragEnabled = false;
 
-        const POOL_SIZE = 10;
-        const sfxPool = Array.from({ length: POOL_SIZE }, () => {
-            const a = new Audio('sfx/sfx.mp3');
-            a.volume = 0.8;
-            return a;
-        });
-        let sfxIndex = 0;
+        // --- Audio setups targeting the 'sfx' folder ---
+        const sfxSpawn = new Audio('sfx/sfx.mp3');
+        sfxSpawn.preload = 'auto';
 
-        function unlockAudio() {
-            sfxPool.forEach(sound => {
-                sound.play().then(() => {
-                    sound.pause();
-                    sound.currentTime = 0;
-                }).catch(() => {});
-            });
-            ['click', 'touchstart', 'pointerdown', 'keydown'].forEach(evt => {
-                window.removeEventListener(evt, unlockAudio);
-            });
+        const POOL_SIZE = 15;
+        const sfxEatPool = [];
+        let poolIndex = 0;
+
+        for (let i = 0; i < POOL_SIZE; i++) {
+            const sound = new Audio('sfx/sfx2.mp3');
+            sound.preload = 'auto';
+            sfxEatPool.push(sound);
         }
 
-        ['click', 'touchstart', 'pointerdown', 'keydown'].forEach(evt => {
-            window.addEventListener(evt, unlockAudio);
-        });
-
-        function playSFX() {
-            const sound = sfxPool[sfxIndex];
-            sound.currentTime = 0;
-            sound.play().catch(() => {});
-            sfxIndex = (sfxIndex + 1) % POOL_SIZE;
+        function playSpawnSFX() {
+            sfxSpawn.currentTime = 0;
+            sfxSpawn.volume = 0.5;
+            sfxSpawn.play().catch(() => {});
         }
 
-        Events.on(mouseConstraint, 'startdrag', () => { isDragging = true; });
-        Events.on(mouseConstraint, 'enddrag', () => {
-            setTimeout(() => { isDragging = false; }, 100);
-        });
+        function playEatSFX() {
+            const audio = sfxEatPool[poolIndex];
+            poolIndex = (poolIndex + 1) % POOL_SIZE;
+
+            audio.currentTime = 0;
+            audio.volume = 0.5;
+            audio.play().catch(() => {});
+        }
 
         function getResponsivePlushSize() {
-            const minDim = Math.min(window.innerWidth, window.innerHeight);
-            if (minDim < 480) return 60;
-            if (minDim < 768) return 70;
-            return 80;
+            const minDimension = Math.min(window.innerWidth, window.innerHeight);
+            return Math.max(45, Math.min(80, minDimension * 0.12));
         }
 
-        function spawnPlush(x, y, playSound = true) {
+        function spawnPlush(x, y, playSound = true, isManual = false) {
             const plushSize = getResponsivePlushSize();
+            const plushWidth = plushSize;
+            const plushHeight = plushSize;
 
-            const plush = Bodies.rectangle(x, y, plushSize, plushSize, {
-                chamfer: { radius: plushSize * 0.175 },
-                restitution: 0.5,
-                friction: 0.2,
-                frictionStatic: 0.1,
+            const rand = Math.random();
+            let isEater = false;
+            let isOguri = false;
+            let texture = 'images/plush.png';
+
+            if (isManual && rand < 0.006) {
+                isEater = true;
+                isOguri = true;
+                texture = 'images/oguri.png';
+            } else {
+                isEater = false;
+                isOguri = false;
+                texture = 'images/plush.png';
+            }
+
+            const plush = Bodies.rectangle(x, y, plushWidth, plushHeight, {
+                chamfer: { radius: plushSize * 0.2 },
+                restitution: 0.65,
+                friction: 0.05,
+                frictionStatic: 0.02,
                 render: {
                     sprite: {
-                        texture: 'images/plush.png',
-                        xScale: plushSize / 100,
-                        yScale: plushSize / 100
+                        texture: texture,
+                        xScale: plushWidth / 100,
+                        yScale: plushHeight / 100
                     }
                 }
             });
 
+            plush.isEater = isEater;
+            plush.isOguri = isOguri;
+            plush.eatCount = 0;
+            plush.eatCooldown = 0;
+            plush.isEaten = false;
+
             Body.setAngularVelocity(plush, (Math.random() - 0.5) * 0.2);
             Body.setVelocity(plush, {
                 x: (Math.random() - 0.5) * 2,
-                y: 0
+                y: -1 - Math.random() * 2
             });
 
             Composite.add(engine.world, plush);
             plushBodies.push(plush);
 
-            if (playSound) playSFX();
+            if (isOguri) {
+                plushBodies.forEach(b => {
+                    if (!b.isOguri) {
+                        const dx = b.position.x - x;
+                        const dir = dx >= 0 ? 1 : -1;
+
+                        Body.setVelocity(b, {
+                            x: dir * (3 + Math.random() * 3),
+                            y: -4 - Math.random() * 2
+                        });
+                        Body.setAngularVelocity(b, (Math.random() - 0.5) * 0.4);
+                    }
+                });
+            }
+
+            if (playSound) playSpawnSFX();
         }
 
-        function createPopParticles(x, y) {
+        function createPopParticles(x, y, count = 8) {
             const colors = ['#ff4757', '#ffa502', '#2ed573', '#1e90ff', '#ffffff'];
-            for (let i = 0; i < 8; i++) {
+            const scaleFactor = getResponsivePlushSize() / 80;
+
+            for (let i = 0; i < count; i++) {
                 const angle = Math.random() * Math.PI * 2;
-                const speed = 2 + Math.random() * 6;
+                const speed = (2 + Math.random() * 4) * scaleFactor;
                 particles.push({
                     x: x,
                     y: y,
                     vx: Math.cos(angle) * speed,
                     vy: Math.sin(angle) * speed,
-                    radius: 3 + Math.random() * 5,
+                    radius: (3 + Math.random() * 4) * scaleFactor,
                     color: colors[Math.floor(Math.random() * colors.length)],
                     life: 1.0
                 });
             }
         }
 
+        function spawnFunnyText(x, y, customWord = null) {
+            const words = ["NOM!", "CRUNCH!", "SLURP!", "DELICIOUS!", "GIMME!", "BURP!", "MINE!"];
+            const word = customWord || words[Math.floor(Math.random() * words.length)];
+            floatingTexts.push({
+                x: x,
+                y: y,
+                text: word,
+                life: 1.0,
+                vy: -1.5 - Math.random() * 1.5,
+                rotation: (Math.random() - 0.5) * 0.2
+            });
+        }
+
+        function eatPlush(eater, food) {
+            if (food.isOguri || food.isEaten) return;
+
+            food.isEaten = true;
+
+            const index = plushBodies.indexOf(food);
+            if (index === -1) return;
+
+            eater.eatCount++;
+            eater.eatCooldown = Date.now() + 250;
+
+            createPopParticles(food.position.x, food.position.y);
+            spawnFunnyText(food.position.x, food.position.y);
+            playEatSFX(); // Plays sfx/sfx2.mp3 when Oguri eats
+
+            if (mouseConstraint.body === food) {
+                mouseConstraint.constraint.body = null;
+            }
+
+            Composite.remove(engine.world, food);
+            plushBodies.splice(index, 1);
+
+            if (mouseConstraint.body !== eater) {
+                Body.setVelocity(eater, {
+                    x: eater.velocity.x * 0.5,
+                    y: -6.5
+                });
+                Body.setAngularVelocity(eater, (Math.random() - 0.5) * 0.2);
+            }
+
+            plushBodies.forEach(b => {
+                if (!b.isOguri && !b.isEaten) {
+                    const dx = b.position.x - eater.position.x;
+                    const dy = b.position.y - eater.position.y;
+                    const dist = Math.hypot(dx, dy);
+
+                    if (dist < 250) {
+                        const dirX = dx >= 0 ? 1 : -1;
+                        Body.setVelocity(b, {
+                            x: dirX * (3 + Math.random() * 2),
+                            y: -3 - Math.random() * 2
+                        });
+                        Body.setAngularVelocity(b, (Math.random() - 0.5) * 0.3);
+                    }
+                }
+            });
+        }
+
+        Events.on(engine, 'collisionStart', (event) => {
+            event.pairs.forEach(pair => {
+                const { bodyA, bodyB } = pair;
+                let eater = null;
+                let food = null;
+
+                if (bodyA.isEater && !bodyB.isOguri) {
+                    eater = bodyA;
+                    food = bodyB;
+                } else if (bodyB.isEater && !bodyA.isOguri) {
+                    eater = bodyB;
+                    food = bodyA;
+                }
+
+                if (eater && food) {
+                    eatPlush(eater, food);
+                }
+            });
+        });
+
         Events.on(engine, 'beforeUpdate', () => {
+            const now = Date.now();
+
             for (let i = poppingBodies.length - 1; i >= 0; i--) {
                 const body = poppingBodies[i];
 
@@ -357,20 +454,89 @@
                 Body.scale(body, 0.86, 0.86);
 
                 if (body.render.sprite && body.render.sprite.xScale < 0.02) {
-                    createPopParticles(body.position.x, body.position.y);
+                    createPopParticles(body.position.x, body.position.y, 6);
                     Composite.remove(engine.world, body);
                     poppingBodies.splice(i, 1);
                 }
+            }
+
+            const eaters = plushBodies.filter(b => b.isEater && mouseConstraint.body !== b && now > b.eatCooldown);
+            const foods = plushBodies.filter(b => !b.isOguri && !b.isEaten);
+
+            eaters.forEach(eater => {
+                if (foods.length === 0) return;
+
+                let closestFood = null;
+                let minDistance = Infinity;
+
+                foods.forEach(food => {
+                    const dist = Math.hypot(food.position.x - eater.position.x, food.position.y - eater.position.y);
+                    if (dist < minDistance) {
+                        minDistance = dist;
+                        closestFood = food;
+                    }
+                });
+
+                if (closestFood) {
+                    const dx = closestFood.position.x - eater.position.x;
+                    const dy = closestFood.position.y - eater.position.y;
+                    const moveDirection = dx > 0 ? 1 : -1;
+
+                    let newVy = eater.velocity.y;
+                    if (dy < -40 && Math.abs(dx) < 180 && Math.abs(eater.velocity.y) < 1.5) {
+                        newVy = -5.5;
+                    }
+
+                    Body.setVelocity(eater, {
+                        x: moveDirection * 5.5,
+                        y: newVy
+                    });
+                }
+            });
+
+            const activeOguris = plushBodies.filter(b => b.isOguri);
+            if (activeOguris.length > 0) {
+                foods.forEach(food => {
+                    if (mouseConstraint.body === food) return;
+
+                    let closestOguri = null;
+                    let minDistance = Infinity;
+
+                    activeOguris.forEach(oguri => {
+                        const dist = Math.hypot(oguri.position.x - food.position.x, oguri.position.y - food.position.y);
+                        if (dist < minDistance) {
+                            minDistance = dist;
+                            closestOguri = oguri;
+                        }
+                    });
+
+                    if (closestOguri && minDistance < 280) {
+                        const dx = food.position.x - closestOguri.position.x;
+                        const runDir = dx >= 0 ? 1 : -1;
+
+                        let jumpY = food.velocity.y;
+                        if (Math.abs(food.velocity.y) < 1) {
+                            jumpY = -2.5 - Math.random() * 2;
+                        }
+
+                        Body.setVelocity(food, {
+                            x: runDir * (3.5 + Math.random() * 2),
+                            y: jumpY
+                        });
+                    }
+                });
             }
         });
 
         Events.on(render, 'afterRender', () => {
             const context = render.context;
+            const textSize = Math.max(16, Math.min(24, window.innerWidth * 0.04));
+
             for (let i = particles.length - 1; i >= 0; i--) {
                 const p = particles[i];
                 p.x += p.vx;
                 p.y += p.vy;
-                p.life -= 0.04;
+                p.life -= 0.03;
 
                 if (p.life <= 0) {
                     particles.splice(i, 1);
@@ -385,18 +551,43 @@
                 context.fill();
                 context.restore();
             }
+
+            for (let i = floatingTexts.length - 1; i >= 0; i--) {
+                const ft = floatingTexts[i];
+                ft.y += ft.vy;
+                ft.life -= 0.02;
+
+                if (ft.life <= 0) {
+                    floatingTexts.splice(i, 1);
+                    continue;
+                }
+
+                context.save();
+                context.globalAlpha = ft.life;
+                context.translate(ft.x, ft.y);
+                context.rotate(ft.rotation);
+                context.font = `700 ${textSize}px Fredoka, sans-serif`;
+                context.fillStyle = '#ffa502';
+                context.strokeStyle = '#000';
+                context.lineWidth = 4;
+                context.strokeText(ft.text, 0, 0);
+                context.fillText(ft.text, 0, 0);
+                context.restore();
+            }
         });
 
-        window.addEventListener('pointerdown', (event) => {
-            if (event.target.closest('.button-container')) return;
-            if (isDragging) return;
-            if (event.button && event.button !== 0) return;
-
-            const clickedBodies = Query.point(plushBodies, { x: event.clientX, y: event.clientY });
-
-            if (clickedBodies.length === 0) {
-                spawnPlush(event.clientX, event.clientY, true);
+        function handlePointerSpawn(clientX, clientY) {
+            if (dragEnabled) {
+                const clickedBodies = Query.point(plushBodies, { x: clientX, y: clientY });
+                if (clickedBodies.length > 0) return;
             }
+            spawnPlush(clientX, clientY, true, true);
+        }
+
+        window.addEventListener('pointerdown', (event) => {
+            if (event.button !== 0) return;
+            if (event.target.closest('.button-container')) return;
+            handlePointerSpawn(event.clientX, event.clientY);
         });
 
         const autoBtn = document.getElementById('auto-btn');
@@ -411,8 +602,8 @@
             } else {
                 autoDropInterval = setInterval(() => {
                     const randomX = Math.random() * (window.innerWidth - 120) + 60;
-                    spawnPlush(randomX, 60, false);
-                }, 120);
+                    spawnPlush(randomX, 60, true, false);
+                }, 150);
 
                 autoBtn.textContent = "Auto Drop: ON";
                 autoBtn.classList.add('active');
@@ -422,11 +613,13 @@
         const removeBtn = document.getElementById('remove-btn');
         removeBtn.addEventListener('click', (e) => {
             e.stopPropagation();
+            mouseConstraint.constraint.body = null;
             Composite.remove(engine.world, plushBodies);
             Composite.remove(engine.world, poppingBodies);
             plushBodies = [];
             poppingBodies = [];
             particles = [];
+            floatingTexts = [];
         });
 
         const explodeBtn = document.getElementById('explode-btn');
@@ -434,6 +627,8 @@
             e.stopPropagation();
 
             if (plushBodies.length === 0) return;
+
+            mouseConstraint.constraint.body = null;
 
             if (plushBodies.length >= 120) {
                 const victims = [...plushBodies];
@@ -444,23 +639,23 @@
                         plush.collisionFilter.mask = 0;
                         
                         Body.setVelocity(plush, {
-                            x: (Math.random() - 0.5) * 60,
-                            y: -25 - Math.random() * 30
+                            x: (Math.random() - 0.5) * 30,
+                            y: -15 - Math.random() * 15
                         });
-                        Body.setAngularVelocity(plush, (Math.random() - 0.5) * 3.5);
+                        Body.setAngularVelocity(plush, (Math.random() - 0.5) * 1.5);
 
                         poppingBodies.push(plush);
                     }, Math.random() * 200);
                 });
 
-                for (let i = 0; i < 8; i++) {
-                    setTimeout(() => playSFX(), i * 40);
+                for (let i = 0; i < 5; i++) {
+                    setTimeout(() => playSpawnSFX(), i * 100);
                 }
 
             } else {
                 plushBodies.forEach(plush => {
                     const randomAngle = Math.random() * Math.PI * 2;
-                    const forceMagnitude = (0.12 + Math.random() * 0.18) * plush.mass;
+                    const forceMagnitude = (0.06 + Math.random() * 0.08) * plush.mass;
 
                     const forceX = Math.cos(randomAngle) * forceMagnitude;
                     const forceY = Math.sin(randomAngle) * forceMagnitude;
@@ -468,7 +663,7 @@
                     Body.applyForce(plush, plush.position, { x: forceX, y: forceY });
                 });
 
-                playSFX();
+                playSpawnSFX(); // Plays sfx/sfx.mp3 on explosion
             }
         });
 
@@ -483,17 +678,46 @@
                 dragBtn.classList.add('active');
             } else {
                 dragBtn.classList.remove('active');
+                mouseConstraint.constraint.body = null;
             }
         });
 
-        window.addEventListener('resize', () => {
-            render.options.width = window.innerWidth;
-            render.options.height = window.innerHeight;
-            render.canvas.width = window.innerWidth;
-            render.canvas.height = window.innerHeight;
+        const customBtn = document.getElementById('custom-btn');
+        customBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            
+            const oguris = plushBodies.filter(b => b.isOguri);
+            if (oguris.length === 0) return;
 
-            createWalls();
+            oguris.forEach(oguri => {
+                if (mouseConstraint.body === oguri) {
+                    mouseConstraint.constraint.body = null;
+                }
+                createPopParticles(oguri.position.x, oguri.position.y, 8);
+                Composite.remove(engine.world, oguri);
+            });
+
+            plushBodies = plushBodies.filter(b => !b.isOguri);
+            playSpawnSFX();
         });
+
+        function resizeGame() {
+            const width = window.innerWidth;
+            const height = window.innerHeight;
+
+            render.options.width = width;
+            render.options.height = height;
+            render.canvas.width = width * render.options.pixelRatio;
+            render.canvas.height = height * render.options.pixelRatio;
+
+            Body.setPosition(floor, { x: width / 2, y: height + 30 });
+            Body.setPosition(rightWall, { x: width + 30, y: height / 2 });
+            Body.setPosition(leftWall, { x: -30, y: height / 2 });
+            Body.setPosition(ceiling, { x: width / 2, y: -30 });
+        }
+
+        window.addEventListener('resize', resizeGame);
+        window.addEventListener('orientationchange', () => setTimeout(resizeGame, 100));
     </script>
 </body>
 </html>
