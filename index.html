@@ -172,7 +172,6 @@
             object-fit: contain;
         }
 
-        /* Modal Overlay */
         .modal-overlay {
             display: none;
             position: fixed;
@@ -185,7 +184,6 @@
             pointer-events: none;
         }
 
-        /* Matched UI Card Style */
         .modal-card {
             position: absolute;
             top: 50%;
@@ -242,7 +240,6 @@
             gap: 4px;
         }
 
-        /* Interactive Info Tooltip Icon */
         .info-wrapper {
             position: relative;
             display: inline-flex;
@@ -453,79 +450,48 @@
             document.cookie = `${name}=${value};expires=${d.toUTCString()};path=/`;
         }
 
-        /* Unique Device Fingerprint */
-        function getDeviceId() {
-            let id = localStorage.getItem('device_uid');
-            if (!id) {
-                id = 'DEV_' + Math.random().toString(36).substring(2, 9) + Date.now().toString(36);
-                localStorage.setItem('device_uid', id);
-            }
-            return id;
-        }
-
-        /* XOR Obfuscation Routine */
-        function obfuscate(text, key) {
-            let result = '';
-            for (let i = 0; i < text.length; i++) {
-                result += String.fromCharCode(text.charCodeAt(i) ^ key.charCodeAt(i % key.length));
-            }
-            return btoa(result);
-        }
-
-        function deobfuscate(encodedText, key) {
-            try {
-                let text = atob(encodedText);
-                let result = '';
-                for (let i = 0; i < text.length; i++) {
-                    result += String.fromCharCode(text.charCodeAt(i) ^ key.charCodeAt(i % key.length));
-                }
-                return result;
-            } catch (e) {
-                return null;
-            }
-        }
-
-        /* Universal Base64 Fallback Decoder */
-        function universalDecode(str) {
-            try {
-                let cleanStr = str.trim();
-                const match = cleanStr.match(/^blinkle_\((.*)\)$/);
-                if (match) cleanStr = match[1];
-
-                const parts = cleanStr.split('-');
-                let obfuscatedData = parts.length === 2 ? parts[1] : parts[0];
-
-                /* Attempt 1: Try device ID key */
-                let payload = deobfuscate(obfuscatedData, getDeviceId());
-
-                /* Attempt 2: Try standard Base64 string decode */
-                if (!payload) {
-                    try {
-                        payload = atob(obfuscatedData);
-                    } catch(e) {}
-                }
-
-                if (payload && payload.includes('|')) {
-                    const data = payload.split('|');
-                    const score = parseInt(data[1], 10);
-                    if (!isNaN(score)) return score;
-                }
-
-                /* Attempt 3: Pure numeric fallback */
-                const rawNum = parseInt(cleanStr, 10);
-                return !isNaN(rawNum) ? rawNum : null;
-            } catch (e) {
-                return null;
-            }
-        }
-
-        /* Encode score into blinkle_(cookiedata) structure */
+        /* Portable Base64 Encoder / Decoder for Cross-Browser Compatibility */
         function encodeScore(score) {
-            const deviceId = getDeviceId();
             const salt = Math.random().toString(36).substring(2, 7);
-            const rawPayload = `${salt}|${score}|${deviceId}|${Date.now()}`;
-            const obfuscated = obfuscate(rawPayload, deviceId);
-            return `blinkle_(${salt}-${obfuscated})`;
+            const rawPayload = `${salt}|${score}|${Date.now()}`;
+            const b64Data = btoa(rawPayload);
+            return `blinkle_(${salt}-${b64Data})`;
+        }
+
+        function universalDecode(str) {
+            if (!str || typeof str !== 'string') return null;
+
+            let cleanStr = str.trim();
+
+            const match = cleanStr.match(/^blinkle_\((.*)\)$/i);
+            if (match) cleanStr = match[1];
+
+            const dashParts = cleanStr.split('-');
+            const dataPart = dashParts.length === 2 ? dashParts[1] : dashParts[0];
+
+            let decodedRaw = null;
+            try {
+                decodedRaw = atob(dataPart);
+            } catch (e) {
+                // Not standard base64
+            }
+
+            if (decodedRaw) {
+                // Check salt|score|timestamp format
+                if (decodedRaw.includes('|')) {
+                    const parts = decodedRaw.split('|');
+                    const score = parseInt(parts[1], 10);
+                    if (!isNaN(score) && score >= 0) return score;
+                }
+
+                // Direct number inside base64
+                const directNum = parseInt(decodedRaw, 10);
+                if (!isNaN(directNum) && directNum >= 0) return directNum;
+            }
+
+            // Fallback: Extract pure numerical value
+            const fallbackNum = parseInt(cleanStr.replace(/[^0-9]/g, ''), 10);
+            return !isNaN(fallbackNum) ? fallbackNum : null;
         }
 
         /* Load and parse initial score */
@@ -584,7 +550,7 @@
             setCookie('eatenCountData', encodeScore(totalEaten));
         }
 
-        /* Cookie UI Logic, Copy Button, Mobile Tap Tooltip & Bounded Dragging */
+        /* Cookie Modal Logic */
         const cookieBtn = document.getElementById('cookie-btn');
         const cookieModal = document.getElementById('cookie-modal');
         const closeModalBtn = document.getElementById('close-modal-btn');
@@ -684,9 +650,14 @@
 
         loadCookieBtn.addEventListener('click', () => {
             const inputVal = pasteCookieInput.value.trim();
+            if (!inputVal) {
+                alert('Please paste a cookie string first!');
+                return;
+            }
+
             const decodedScore = universalDecode(inputVal);
 
-            if (decodedScore !== null && decodedScore >= 0) {
+            if (decodedScore !== null && !isNaN(decodedScore) && decodedScore >= 0) {
                 totalEaten = decodedScore;
                 setCookie('eatenCountData', encodeScore(totalEaten));
                 updateCounterUI();
@@ -698,6 +669,7 @@
             }
         });
 
+        /* Physics Engine Setup */
         const { Engine, Render, Runner, Bodies, Composite, Mouse, MouseConstraint, Events, Body, Query } = Matter;
 
         const engine = Engine.create();
@@ -858,7 +830,6 @@
                 const ry = 80 + Math.random() * 50;
                 spawnPlush(rx, ry, true, false, true);
             }
-            console.log(`Spawned ${count} Oguri!`);
         };
 
         function createPopParticles(x, y, count = 8) {
