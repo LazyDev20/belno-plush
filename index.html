@@ -309,13 +309,6 @@
             font-size: 11px;
             width: 100%;
             outline: none;
-            -webkit-text-security: disk;
-            text-security: disk;
-        }
-
-        .input-wrapper input.revealed {
-            -webkit-text-security: none;
-            text-security: none;
         }
 
         .input-wrapper button {
@@ -419,7 +412,7 @@
                     </span>
                 </span>
                 <div class="input-wrapper">
-                    <input type="text" id="cookie-val-input" readonly value="" autocomplete="off" spellcheck="false">
+                    <input type="password" id="cookie-val-input" readonly value="">
                     <button id="copy-cookie-btn" type="button" title="Copy Cookie">
                         <span class="material-symbols-outlined" id="copy-icon">content_copy</span>
                     </button>
@@ -628,8 +621,8 @@
         });
 
         toggleEyeBtn.addEventListener('click', () => {
-            const isHidden = !cookieValInput.classList.contains('revealed');
-            cookieValInput.classList.toggle('revealed');
+            const isHidden = cookieValInput.type === 'password';
+            cookieValInput.type = isHidden ? 'text' : 'password';
             eyeIcon.textContent = isHidden ? 'visibility' : 'visibility_off';
         });
 
@@ -642,8 +635,10 @@
                     copyIcon.style.color = '';
                 }, 1500);
             }).catch(() => {
+                cookieValInput.type = 'text';
                 cookieValInput.select();
                 document.execCommand('copy');
+                cookieValInput.type = 'password';
                 copyIcon.textContent = 'check';
                 copyIcon.style.color = '#2ed573';
                 setTimeout(() => {
