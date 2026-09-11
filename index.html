@@ -8,13 +8,13 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
     <style>
         .material-symbols-outlined {
-            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
-            font-size: clamp(18px, 2.5vw, 22px);
+            font-size: 20px;
             vertical-align: middle;
+            user-select: none;
         }
 
         body, html {
@@ -172,6 +172,193 @@
             object-fit: contain;
         }
 
+        /* Modal Overlay */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: transparent;
+            z-index: 10000;
+            pointer-events: none;
+        }
+
+        /* Matched UI Card Style */
+        .modal-card {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: #57606f;
+            border: none;
+            border-radius: 12px;
+            padding: 16px;
+            width: 280px;
+            color: #fff;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+            touch-action: none;
+            pointer-events: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: move;
+        }
+
+        .modal-close {
+            background: transparent;
+            border: none;
+            color: #ced6e0;
+            cursor: pointer;
+            padding: 0;
+            display: flex;
+            align-items: center;
+        }
+
+        .modal-close:hover {
+            color: #fff;
+        }
+
+        .field-group {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .field-label {
+            font-size: 12px;
+            color: #ced6e0;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        /* Interactive Info Tooltip Icon */
+        .info-wrapper {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+        }
+
+        .info-icon {
+            font-size: 14px;
+            color: #ced6e0;
+            cursor: pointer;
+        }
+
+        .info-icon:hover {
+            color: #fff;
+        }
+
+        .info-bubble {
+            display: none;
+            position: absolute;
+            bottom: 125%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #2f3542;
+            color: #fff;
+            font-size: 11px;
+            font-weight: 600;
+            padding: 6px 10px;
+            border-radius: 8px;
+            width: 170px;
+            text-align: center;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            pointer-events: none;
+            z-index: 10001;
+        }
+
+        .info-bubble::after {
+            content: '';
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            border-width: 5px;
+            border-style: solid;
+            border-color: #2f3542 transparent transparent transparent;
+        }
+
+        .info-wrapper:hover .info-bubble,
+        .info-wrapper.active .info-bubble {
+            display: block;
+        }
+
+        .input-wrapper {
+            display: flex;
+            background: #2f3542;
+            border: none;
+            border-radius: 8px;
+            padding: 6px 10px;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .input-wrapper input {
+            background: transparent;
+            border: none;
+            color: #2ed573;
+            font-family: monospace;
+            font-size: 11px;
+            width: 100%;
+            outline: none;
+        }
+
+        .input-wrapper button {
+            background: transparent;
+            border: none;
+            color: #a4b0be;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            padding: 0;
+            transition: color 0.2s;
+        }
+
+        .input-wrapper button:hover {
+            color: #fff;
+        }
+
+        .text-input {
+            background: #2f3542;
+            border: none;
+            border-radius: 8px;
+            padding: 8px 10px;
+            color: #fff;
+            font-family: monospace;
+            font-size: 11px;
+            outline: none;
+        }
+
+        .save-btn {
+            background: #2ed573;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            padding: 9px;
+            font-family: inherit;
+            font-weight: 700;
+            font-size: 14px;
+            cursor: pointer;
+            margin-top: 4px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+            transition: background 0.2s;
+        }
+
+        .save-btn:hover {
+            background: #26af5f;
+        }
+
         @media (max-width: 480px) {
             .button-container {
                 top: 10px;
@@ -200,15 +387,56 @@
         <button id="custom-btn" class="control-btn icon-btn" title="Remove Oguris Only">
             <img src="images/custom_icon.png" alt="icon">
         </button>
+        <button id="cookie-btn" class="control-btn icon-btn" title="Cookie Settings">
+            <span class="material-symbols-outlined">cookie</span>
+        </button>
         <div id="eaten-counter" class="control-btn eaten-counter" title="Total Eaten">
             <img src="images/iconfork.png" alt="icon">
             <span id="eaten-count">0</span>
         </div>
     </div>
 
+    <!-- Save Data Modal -->
+    <div id="cookie-modal" class="modal-overlay">
+        <div class="modal-card" id="modal-card">
+            <div class="modal-header" id="modal-header">
+                <span>Save Data</span>
+                <button id="close-modal-btn" class="modal-close">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+            
+            <div class="field-group">
+                <span class="field-label">
+                    Current Cookie
+                    <span class="info-wrapper" id="cookie-info-wrapper">
+                        <span class="material-symbols-outlined info-icon">info</span>
+                        <span class="info-bubble">do not share this cookie unless you wanna share your eaten progress...</span>
+                    </span>
+                </span>
+                <div class="input-wrapper">
+                    <input type="password" id="cookie-val-input" readonly value="">
+                    <button id="copy-cookie-btn" type="button" title="Copy Cookie">
+                        <span class="material-symbols-outlined" id="copy-icon">content_copy</span>
+                    </button>
+                    <button id="toggle-eye-btn" type="button" title="Toggle Visibility">
+                        <span class="material-symbols-outlined" id="eye-icon">visibility_off</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="field-group">
+                <span class="field-label">Paste Cookie Data</span>
+                <input type="text" id="paste-cookie-input" class="text-input" placeholder="Paste blinkle_(cookiedata)...">
+            </div>
+
+            <button id="load-cookie-btn" class="save-btn" type="button">Load Save</button>
+        </div>
+    </div>
+
     <div class="watermark">
         <img src="images/icon.png" alt="icon">
-        <span>blinkle.fun</span>
+        <span>belno.blinkle.fun</span>
     </div>
 
     <script>
@@ -225,6 +453,86 @@
             document.cookie = `${name}=${value};expires=${d.toUTCString()};path=/`;
         }
 
+        /* Unique Device Fingerprint */
+        function getDeviceId() {
+            let id = localStorage.getItem('device_uid');
+            if (!id) {
+                id = 'DEV_' + Math.random().toString(36).substring(2, 9) + Date.now().toString(36);
+                localStorage.setItem('device_uid', id);
+            }
+            return id;
+        }
+
+        /* XOR Obfuscation Routine */
+        function obfuscate(text, key) {
+            let result = '';
+            for (let i = 0; i < text.length; i++) {
+                result += String.fromCharCode(text.charCodeAt(i) ^ key.charCodeAt(i % key.length));
+            }
+            return btoa(result);
+        }
+
+        function deobfuscate(encodedText, key) {
+            try {
+                let text = atob(encodedText);
+                let result = '';
+                for (let i = 0; i < text.length; i++) {
+                    result += String.fromCharCode(text.charCodeAt(i) ^ key.charCodeAt(i % key.length));
+                }
+                return result;
+            } catch (e) {
+                return null;
+            }
+        }
+
+        /* Encode score into blinkle_(cookiedata) structure */
+        function encodeScore(score) {
+            const deviceId = getDeviceId();
+            const salt = Math.random().toString(36).substring(2, 7);
+            const rawPayload = `${salt}|${score}|${deviceId}|${Date.now()}`;
+            const obfuscated = obfuscate(rawPayload, deviceId);
+            return `blinkle_(${salt}-${obfuscated})`;
+        }
+
+        /* Decode score from string payload */
+        function decodeScore(str) {
+            if (!str) return null;
+            try {
+                let cleanStr = str.trim();
+                
+                /* Extract inner data if wrapped in blinkle_(...) */
+                const match = cleanStr.match(/^blinkle_\((.*)\)$/);
+                if (match) {
+                    cleanStr = match[1];
+                }
+
+                const parts = cleanStr.split('-');
+                let obfuscatedData = parts.length === 2 ? parts[1] : parts[0];
+
+                /* Deobfuscate using device ID */
+                let payload = deobfuscate(obfuscatedData, getDeviceId());
+
+                /* Base64 Fallback */
+                if (!payload) {
+                    try {
+                        payload = atob(obfuscatedData);
+                    } catch(e) {}
+                }
+
+                if (payload && payload.includes('|')) {
+                    const data = payload.split('|');
+                    const score = parseInt(data[1], 10);
+                    return !isNaN(score) ? score : null;
+                }
+
+                /* Legacy compatibility fallback */
+                const rawNum = parseInt(cleanStr, 10);
+                return !isNaN(rawNum) ? rawNum : null;
+            } catch (e) {
+                return null;
+            }
+        }
+
         function formatNumber(num) {
             if (num >= 1e12) return (num / 1e12).toFixed(1).replace(/\.0$/, '') + 'T';
             if (num >= 1e9) return (num / 1e9).toFixed(1).replace(/\.0$/, '') + 'B';
@@ -233,7 +541,15 @@
             return num.toString();
         }
 
-        let totalEaten = parseInt(getCookie('eatenCount') || '0', 10);
+        /* Load and parse initial score */
+        let rawCookieVal = getCookie('eatenCountData') || getCookie('eatenCount');
+        let totalEaten = 0;
+
+        if (rawCookieVal) {
+            let parsed = decodeScore(rawCookieVal);
+            totalEaten = parsed !== null ? parsed : 0;
+        }
+
         const eatenCountEl = document.getElementById('eaten-count');
         const eatenCounterBtn = document.getElementById('eaten-counter');
         
@@ -270,8 +586,123 @@
         function incrementEatenCounter() {
             totalEaten++;
             updateCounterUI();
-            setCookie('eatenCount', totalEaten);
+            setCookie('eatenCountData', encodeScore(totalEaten));
         }
+
+        /* Cookie UI Logic, Copy Button, Mobile Tap Tooltip & Bounded Dragging */
+        const cookieBtn = document.getElementById('cookie-btn');
+        const cookieModal = document.getElementById('cookie-modal');
+        const closeModalBtn = document.getElementById('close-modal-btn');
+        const cookieValInput = document.getElementById('cookie-val-input');
+        const toggleEyeBtn = document.getElementById('toggle-eye-btn');
+        const copyCookieBtn = document.getElementById('copy-cookie-btn');
+        const copyIcon = document.getElementById('copy-icon');
+        const eyeIcon = document.getElementById('eye-icon');
+        const pasteCookieInput = document.getElementById('paste-cookie-input');
+        const loadCookieBtn = document.getElementById('load-cookie-btn');
+        const cookieInfoWrapper = document.getElementById('cookie-info-wrapper');
+
+        const modalCard = document.getElementById('modal-card');
+        let isDragging = false;
+        let offsetX = 0, offsetY = 0;
+
+        cookieInfoWrapper.addEventListener('click', (e) => {
+            e.stopPropagation();
+            cookieInfoWrapper.classList.toggle('active');
+        });
+
+        document.addEventListener('click', () => {
+            cookieInfoWrapper.classList.remove('active');
+        });
+
+        modalCard.addEventListener('pointerdown', (e) => {
+            if (e.target.closest('input, button, .info-wrapper')) return;
+            isDragging = true;
+            const rect = modalCard.getBoundingClientRect();
+            offsetX = e.clientX - rect.left;
+            offsetY = e.clientY - rect.top;
+            modalCard.style.transform = 'none';
+            modalCard.style.left = `${rect.left}px`;
+            modalCard.style.top = `${rect.top}px`;
+        });
+
+        window.addEventListener('pointermove', (e) => {
+            if (!isDragging) return;
+            
+            const cardWidth = modalCard.offsetWidth;
+            const cardHeight = modalCard.offsetHeight;
+            
+            let newX = e.clientX - offsetX;
+            let newY = e.clientY - offsetY;
+
+            newX = Math.max(0, Math.min(window.innerWidth - cardWidth, newX));
+            newY = Math.max(0, Math.min(window.innerHeight - cardHeight, newY));
+
+            modalCard.style.left = `${newX}px`;
+            modalCard.style.top = `${newY}px`;
+        });
+
+        window.addEventListener('pointerup', () => {
+            isDragging = false;
+        });
+
+        cookieBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            cookieValInput.value = encodeScore(totalEaten);
+            modalCard.style.left = '50%';
+            modalCard.style.top = '50%';
+            modalCard.style.transform = 'translate(-50%, -50%)';
+            cookieModal.style.display = 'block';
+        });
+
+        closeModalBtn.addEventListener('click', () => {
+            cookieModal.style.display = 'none';
+        });
+
+        toggleEyeBtn.addEventListener('click', () => {
+            const isHidden = cookieValInput.type === 'password';
+            cookieValInput.type = isHidden ? 'text' : 'password';
+            eyeIcon.textContent = isHidden ? 'visibility' : 'visibility_off';
+        });
+
+        copyCookieBtn.addEventListener('click', () => {
+            navigator.clipboard.writeText(cookieValInput.value).then(() => {
+                copyIcon.textContent = 'check';
+                copyIcon.style.color = '#2ed573';
+                setTimeout(() => {
+                    copyIcon.textContent = 'content_copy';
+                    copyIcon.style.color = '';
+                }, 1500);
+            }).catch(() => {
+                /* Fallback selection */
+                cookieValInput.type = 'text';
+                cookieValInput.select();
+                document.execCommand('copy');
+                cookieValInput.type = 'password';
+                copyIcon.textContent = 'check';
+                copyIcon.style.color = '#2ed573';
+                setTimeout(() => {
+                    copyIcon.textContent = 'content_copy';
+                    copyIcon.style.color = '';
+                }, 1500);
+            });
+        });
+
+        loadCookieBtn.addEventListener('click', () => {
+            const inputVal = pasteCookieInput.value.trim();
+            const decodedScore = decodeScore(inputVal);
+
+            if (decodedScore !== null && decodedScore >= 0) {
+                totalEaten = decodedScore;
+                setCookie('eatenCountData', encodeScore(totalEaten));
+                updateCounterUI();
+                cookieValInput.value = encodeScore(totalEaten);
+                pasteCookieInput.value = '';
+                cookieModal.style.display = 'none';
+            } else {
+                alert('Invalid Cookie String!');
+            }
+        });
 
         const { Engine, Render, Runner, Bodies, Composite, Mouse, MouseConstraint, Events, Body, Query } = Matter;
 
@@ -684,7 +1115,7 @@
 
         window.addEventListener('pointerdown', (event) => {
             if (event.button !== 0) return;
-            if (event.target.closest('.button-container')) return;
+            if (event.target.closest('.button-container') || event.target.closest('#modal-card')) return;
             handlePointerSpawn(event.clientX, event.clientY);
         });
 
